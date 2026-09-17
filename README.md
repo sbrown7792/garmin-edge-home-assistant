@@ -1,6 +1,6 @@
-Yes - the below is written by AI, and the entire repo/codebase was slopcoded. 
-/But it works/
-At least on my (bike) computer.
+Yes - the below is written by AI, and the entire repo/codebase was slopcoded. <br>
+*But it works*<br>
+At least on my machine (bike computer :wink:)<br>
 Hopefully it will on yours too, because this is very handy for opening a garage right when you end your ride.
 
 

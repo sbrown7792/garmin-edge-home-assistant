@@ -288,86 +288,31 @@ mode: single
 target (a counter, a toggle and a notification, so it proves delivery without moving
 anything).
 
-If Home Assistant sits behind a reverse proxy, it must be told so, or every proxied
-request comes back **400 Bad Request** — Home Assistant rejects an `X-Forwarded-For`
-header from a proxy it does not trust, while the same request answers `200` when sent
-directly.
+### Reaching Home Assistant
 
-**On Home Assistant 2026.8 and later, set this in Settings > System > Network, not in
-YAML.** HTTP settings now live in a config store that overrides `configuration.yaml`, and
-the `http:` YAML block is deprecated (and ignored entirely from 2027.02). The store works
-by trial: a change is staged as *pending*, Home Assistant restarts to try it, and **you
-must confirm it afterwards or it reverts** — and a trial that was never confirmed is never
-retried. So "I edited the YAML, restarted, and nothing changed" is exactly what this
-looks like.
+Putting Home Assistant on HTTPS is your own infrastructure and outside this repository.
+The apps need three things from it:
 
-Trust the address Home Assistant *observes*, which is not necessarily the one you connect
-to. A proxy often listens on one address and egresses from another, and Home Assistant
-names the right one in its log:
+- **HTTPS with a publicly trusted certificate.** The Edge never connects itself. Garmin
+  Connect on the phone makes the request and checks the certificate against the phone's
+  trust store, so plain HTTP and self-signed certificates fail. On Android, Garmin
+  Connect ignores user-installed CAs, so a private CA does not work there.
+- **A route from the phone.** If Home Assistant is only on your LAN, the phone's VPN has
+  to be up while you ride.
+- **Trust for your reverse proxy, if you use one.** Otherwise every request through the
+  proxy gets `400 Bad Request`. On Home Assistant 2026.8 and later, the trusted-proxy
+  setting is under Settings > System > Network rather than in YAML.
 
-```
-ERROR [homeassistant.components.http.forwarded]
-Received X-Forwarded-For header from an untrusted proxy 172.18.0.5
-```
-
-That wording also tells you forwarded headers are already enabled — the other failure
-("not set-up for reverse proxies") means they are not.
-
-Home Assistant must answer over **HTTPS with a certificate that validates**. Connect IQ
-rejects plain HTTP and self-signed certificates.
-
-### Where the certificate is actually checked
-
-The Edge never does TLS for this. `makeWebRequest` is proxied by the Garmin Connect app
-on your phone, which opens the real connection and validates the certificate against
-**the phone's OS trust store**. There is no Garmin-specific CA chain, and no trust store
-on the watch. That has two consequences:
-
-- **A private CA works on iOS**, if you install the root as a profile *and* switch it on
-  under Settings > General > About > Certificate Trust Settings. Installing the profile
-  alone is not enough.
-- **A private CA does not work on Android.** User-installed CAs go in the user trust
-  store, which apps ignore unless they opt in through a network security config, and
-  Garmin Connect does not. Chrome *does* trust user CAs, so a working browser test on
-  Android tells you nothing about whether Garmin Connect will accept it.
-
-### Keeping Home Assistant local but publicly trusted
-
-You do not have to expose Home Assistant to get a trusted certificate. Issue one through
-a **DNS-01 challenge**, which proves domain ownership over DNS instead of an inbound
-connection:
-
-1. Get a name — your own domain, or a free one from DuckDNS.
-2. Issue a Let's Encrypt certificate for it over DNS-01 (the pfSense ACME package, the
-   DuckDNS add-on, or certbot with your DNS provider's plugin). No ports are opened.
-
-   If your registrar's API is awkward — Namecheap, for instance, only grants API access
-   to accounts with 20+ domains, $50 on balance, or $50 spent in two years, wants a
-   whitelisted source IP, and rewrites every record in the zone on each run — you do not
-   have to fight it. Either delegate just the challenge with a one-time CNAME from
-   `_acme-challenge.<host>` to an acme-dns provider, so the ACME client never touches
-   your registrar, or host the zone's DNS at a provider with a sane API (Cloudflare is
-   free and keeps your registration where it is), or sidestep the domain entirely with a
-   DuckDNS hostname used only for this.
-3. Point that name's A record at Home Assistant's **LAN address**. A public record
-   holding a private IP is fine and leaks nothing useful.
-4. Serve it from your reverse proxy, and make sure you point at `fullchain.pem` — a
-   leaf-only certificate fails the handshake even though browsers paper over it.
-
-Any phone then validates it against the public chain with nothing installed. Reaching
-the LAN address is up to your VPN, so the button works whenever the VPN is up — if you
-would rather not depend on that, a Cloudflare Tunnel gives you a hostname and
-certificate with no open ports and no VPN.
-
-Test before touching the Edge:
+Test before touching the Edge. Test ping moves nothing, so it is safe to send at any
+time:
 
 ```bash
-curl -i -X POST -H "Content-Type: application/json" -d '{"action":"open"}' \
-  https://YOUR-HA-HOST/api/webhook/YOUR-WEBHOOK-ID
+curl -i -X POST -H "Authorization: Bearer YOUR-TOKEN" -H "Content-Type: application/json" \
+  -d '{"action":"Test ping"}' https://YOUR-HA-HOST/api/events/garmin_edge
 ```
 
-A 200 with an empty body means it fired. That empty body is what Home Assistant always
-returns, and the app treats it as success.
+A `200` with `{"message": "Event garmin_edge fired."}` means the Edge will get through
+too.
 
 ## 3. Build and install
 

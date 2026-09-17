@@ -1,3 +1,9 @@
+Yes - the below is written by AI, and the entire repo/codebase was slopcoded. 
+/But it works/
+At least on my (bike) computer.
+Hopefully it will on yours too, because this is very handy for opening a garage right when you end your ride.
+
+
 # HA Control — Home Assistant buttons on a Garmin Edge
 
 Fires Home Assistant actions from an Edge 1040: open a garage, toggle a light, run a

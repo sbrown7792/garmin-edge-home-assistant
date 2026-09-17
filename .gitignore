@@ -1,0 +1,8 @@
+bin/
+developer_key.der
+developer_key.pem
+homeassistant/acme-registration.json
+config/personal/Config.mc
+
+# Ride files carry a GPS track, which usually starts and ends at home.
+*.fit

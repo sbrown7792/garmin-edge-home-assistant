@@ -1,0 +1,9 @@
+<properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- Blank values fall back to the compiled-in defaults in config/*/Config.mc. -->
+    <property id="haUrl" type="string"></property>
+    <property id="haToken" type="string"></property>
+    <property id="eventType" type="string"></property>
+    <property id="arriveEnabled" type="boolean">true</property>
+    <property id="arriveAction" type="string"></property>
+    <property id="arriveRadius" type="number">0</property>
+</properties>

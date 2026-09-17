@@ -1,0 +1,25 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">HA Control</string>
+    <string id="AppNameWidget">HA Control W</string>
+
+    <string id="ConnectionTitle">Home Assistant</string>
+    <string id="ConnectionDescription">Where to send commands, and what the glance shows.</string>
+    <string id="HaUrlTitle">Server URL</string>
+    <string id="HaUrlPrompt">https://your-home-assistant, no trailing slash. Must be HTTPS with a certificate that validates.</string>
+    <string id="HaTokenTitle">Access token</string>
+    <string id="HaTokenPrompt">A long-lived access token from your Home Assistant profile, under Security.</string>
+    <string id="StatusEntityTitle">Glance entity</string>
+    <string id="StatusEntityPrompt">Entity whose state the glance shows, e.g. cover.garage_door. Leave blank for none.</string>
+
+    <string id="EventTypeTitle">Event type</string>
+    <string id="EventTypePrompt">The Home Assistant event each button fires, e.g. garmin_edge. Your automations trigger on it.</string>
+    <string id="ShowTestTitle">Show test button</string>
+    <string id="ButtonDescription">The button label, which is also sent as the action name your automation matches on. Entity is optional and only drives the state display. Leave the label blank to hide this button.</string>
+    <string id="Button1Title">Button 1</string>
+    <string id="Button2Title">Button 2</string>
+    <string id="Button3Title">Button 3</string>
+    <string id="LabelTitle">Label</string>
+    <string id="LabelPrompt">Shown on the button, e.g. Open garage</string>
+    <string id="EntityTitle">Entity</string>
+    <string id="EntityPrompt">Target entity, e.g. cover.garage_door</string>
+</strings>

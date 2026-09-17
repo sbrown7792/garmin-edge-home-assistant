@@ -1,0 +1,3 @@
+project.manifest = manifest-field.xml
+base.sourcePath = field;shared;config/personal
+base.resourcePath = resources-field;resources/drawables

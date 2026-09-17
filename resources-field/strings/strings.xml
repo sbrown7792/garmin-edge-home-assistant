@@ -1,0 +1,20 @@
+<strings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <string id="AppName">HA Arrival</string>
+
+    <string id="ConnectionTitle">Home Assistant</string>
+    <string id="ConnectionDescription">Where to send the arrival event.</string>
+    <string id="HaUrlTitle">Server URL</string>
+    <string id="HaUrlPrompt">https://your-home-assistant, no trailing slash. Must be HTTPS with a certificate that validates.</string>
+    <string id="HaTokenTitle">Access token</string>
+    <string id="HaTokenPrompt">A long-lived access token from your Home Assistant profile, under Security.</string>
+    <string id="EventTypeTitle">Event type</string>
+    <string id="EventTypePrompt">The Home Assistant event to fire, e.g. garmin_edge. Your automation triggers on it.</string>
+
+    <string id="ArrivalTitle">Arrival</string>
+    <string id="ArrivalDescription">Pressing STOP within the radius of Home Assistant's home zone fires the event. START, auto-pause and LAP never do.</string>
+    <string id="ArriveEnabledTitle">Enabled</string>
+    <string id="ArriveActionTitle">Action name</string>
+    <string id="ArriveActionPrompt">Sent as the event's action, e.g. Arrive. Your automation matches on it.</string>
+    <string id="ArriveRadiusTitle">Radius (m)</string>
+    <string id="ArriveRadiusPrompt">How close to home counts. 0 uses the radius of your Home Assistant home zone.</string>
+</strings>

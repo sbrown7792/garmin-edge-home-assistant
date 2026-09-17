@@ -1,0 +1,24 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <group id="connection" title="@Strings.ConnectionTitle" description="@Strings.ConnectionDescription">
+        <setting propertyKey="@Properties.haUrl" title="@Strings.HaUrlTitle" prompt="@Strings.HaUrlPrompt">
+            <settingConfig type="url" />
+        </setting>
+        <setting propertyKey="@Properties.haToken" title="@Strings.HaTokenTitle" prompt="@Strings.HaTokenPrompt">
+            <settingConfig type="password" />
+        </setting>
+        <setting propertyKey="@Properties.eventType" title="@Strings.EventTypeTitle" prompt="@Strings.EventTypePrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+    </group>
+    <group id="arrival" title="@Strings.ArrivalTitle" description="@Strings.ArrivalDescription">
+        <setting propertyKey="@Properties.arriveEnabled" title="@Strings.ArriveEnabledTitle">
+            <settingConfig type="boolean" />
+        </setting>
+        <setting propertyKey="@Properties.arriveAction" title="@Strings.ArriveActionTitle" prompt="@Strings.ArriveActionPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+        <setting propertyKey="@Properties.arriveRadius" title="@Strings.ArriveRadiusTitle" prompt="@Strings.ArriveRadiusPrompt">
+            <settingConfig type="numeric" min="0" max="2000" />
+        </setting>
+    </group>
+</settings>

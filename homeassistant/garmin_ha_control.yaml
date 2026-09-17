@@ -1,0 +1,84 @@
+# Home Assistant config for HA Control and HA Arrival.
+#
+# Drop this file in <config>/packages/ and make sure configuration.yaml has:
+#
+#   homeassistant:
+#     packages: !include_dir_named packages
+#
+# Then change cover.garage_door to your own cover and restart. Everything here can equally
+# be built by hand in the UI (Settings > Devices & Services > Helpers, and Settings >
+# Automations).
+#
+# Both apps fire the event `garmin_edge` with the button's label as `action`, so each
+# automation below matches one label. Rename a button and you rename its match here too.
+
+input_boolean:
+  garmin_test_button:
+    name: Garmin test button
+    icon: mdi:bike
+
+counter:
+  garmin_test_presses:
+    name: Garmin test presses
+    icon: mdi:counter
+
+automation:
+  # Target for the Test ping button. Proves the Edge -> phone -> Home Assistant path
+  # without anything in the house moving. Watch the counter or the notification.
+  - id: garmin_test_event
+    alias: Garmin test ping
+    description: Fires from the Edge but moves nothing. Safe to press repeatedly.
+    triggers:
+      - trigger: event
+        event_type: garmin_edge
+        event_data:
+          action: Test ping
+    conditions: []
+    actions:
+      - action: counter.increment
+        target:
+          entity_id: counter.garmin_test_presses
+      - action: input_boolean.toggle
+        target:
+          entity_id: input_boolean.garmin_test_button
+      - action: persistent_notification.create
+        data:
+          title: Garmin test ping
+          message: "Received at {{ now().strftime('%H:%M:%S') }}"
+    mode: queued
+
+  # HA Control's Garage button. The screen shows OPEN or CLOSE from the live state, so a
+  # toggle is what the rider expects here.
+  - id: garmin_garage_event
+    alias: Garage door from Garmin Edge
+    triggers:
+      - trigger: event
+        event_type: garmin_edge
+        event_data:
+          action: Garage
+    conditions: []
+    actions:
+      - action: cover.toggle
+        target:
+          entity_id: cover.garage_door
+    mode: single
+
+  # HA Arrival, on STOP within the home zone. Opens only, and only from closed: a toggle
+  # would shut a door that is already open, and an open command on a door mid-travel can
+  # reverse it on some openers.
+  - id: garmin_arrive_event
+    alias: Garage open on arrival (Garmin Edge)
+    triggers:
+      - trigger: event
+        event_type: garmin_edge
+        event_data:
+          action: Arrive
+    conditions:
+      - condition: state
+        entity_id: cover.garage_door
+        state: closed
+    actions:
+      - action: cover.open_cover
+        target:
+          entity_id: cover.garage_door
+    mode: single

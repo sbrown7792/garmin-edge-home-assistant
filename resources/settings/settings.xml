@@ -1,0 +1,46 @@
+<settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <group id="connection" title="@Strings.ConnectionTitle" description="@Strings.ConnectionDescription">
+        <setting propertyKey="@Properties.haUrl" title="@Strings.HaUrlTitle" prompt="@Strings.HaUrlPrompt">
+            <settingConfig type="url" />
+        </setting>
+        <setting propertyKey="@Properties.haToken" title="@Strings.HaTokenTitle" prompt="@Strings.HaTokenPrompt">
+            <settingConfig type="password" />
+        </setting>
+        <setting propertyKey="@Properties.eventType" title="@Strings.EventTypeTitle" prompt="@Strings.EventTypePrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+        <setting propertyKey="@Properties.statusEntity" title="@Strings.StatusEntityTitle" prompt="@Strings.StatusEntityPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+        <setting propertyKey="@Properties.showTest" title="@Strings.ShowTestTitle">
+            <settingConfig type="boolean" />
+        </setting>
+    </group>
+
+    <group id="button1" title="@Strings.Button1Title" description="@Strings.ButtonDescription">
+        <setting propertyKey="@Properties.label1" title="@Strings.LabelTitle" prompt="@Strings.LabelPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+        <setting propertyKey="@Properties.entity1" title="@Strings.EntityTitle" prompt="@Strings.EntityPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+    </group>
+
+    <group id="button2" title="@Strings.Button2Title" description="@Strings.ButtonDescription">
+        <setting propertyKey="@Properties.label2" title="@Strings.LabelTitle" prompt="@Strings.LabelPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+        <setting propertyKey="@Properties.entity2" title="@Strings.EntityTitle" prompt="@Strings.EntityPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+    </group>
+
+    <group id="button3" title="@Strings.Button3Title" description="@Strings.ButtonDescription">
+        <setting propertyKey="@Properties.label3" title="@Strings.LabelTitle" prompt="@Strings.LabelPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+        <setting propertyKey="@Properties.entity3" title="@Strings.EntityTitle" prompt="@Strings.EntityPrompt">
+            <settingConfig type="alphaNumeric" />
+        </setting>
+    </group>
+</settings>

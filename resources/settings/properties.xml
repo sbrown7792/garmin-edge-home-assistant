@@ -1,0 +1,17 @@
+<properties xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://developer.garmin.com/downloads/connect-iq/resources.xsd">
+    <!-- Blank values fall back to the compiled-in defaults in source/Config.mc. -->
+    <property id="haUrl" type="string"></property>
+    <property id="haToken" type="string"></property>
+    <property id="eventType" type="string"></property>
+    <property id="statusEntity" type="string"></property>
+    <property id="showTest" type="boolean">false</property>
+
+    <property id="label1" type="string"></property>
+    <property id="entity1" type="string"></property>
+
+    <property id="label2" type="string"></property>
+    <property id="entity2" type="string"></property>
+
+    <property id="label3" type="string"></property>
+    <property id="entity3" type="string"></property>
+</properties>

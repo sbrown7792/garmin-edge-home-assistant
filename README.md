@@ -155,8 +155,13 @@ mode: single
 The `closed` condition matters: a toggle on STOP would shut a door that is already open,
 and an open command on a door mid-travel can reverse it on some openers.
 
-A success or failure pops a full-screen alert on the Edge, since the field may be on a
-page you are not looking at when you stop.
+Success shows a **toast** — a banner that dismisses itself — so the Edge carries straight
+on to its save prompt after you stop. A full-screen `DataFieldAlert` would hold the
+screen until it timed out and then leave you back on the ride page, having to reach for
+the save button yourself.
+
+A failure still pops the full-screen alert, since the door did not move and that is
+worth interrupting for.
 
 The field needs the **Positioning** permission — without it `Activity.Info.currentLocation`
 is always `null`, and the field sits at "No GPS" however good your fix is.

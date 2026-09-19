@@ -33,6 +33,13 @@ module Theme {
         return isDark() ? Graphics.COLOR_LT_GRAY : Graphics.COLOR_DK_GRAY;
     }
 
+    //! The door's empty frame. It has to sit just off the background in both modes: a
+    //! dark grey frame on white reads as a filled panel, which says "closed" when the
+    //! door is wide open.
+    function frameColor() as ColorValue {
+        return isDark() ? Graphics.COLOR_DK_GRAY : Graphics.COLOR_LT_GRAY;
+    }
+
     //! State colours have to carry meaning on either background. Bright green and yellow
     //! read well on black and disappear on white, so the light variants are darker.
     function closedColor() as ColorValue {

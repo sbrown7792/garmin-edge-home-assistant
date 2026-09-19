@@ -126,7 +126,7 @@ class StateReader {
     //! A frame with a panel that sits low when closed and high when open, the same shape
     //! Home Assistant draws on its cover card.
     function drawDoor(dc as Dc, x as Number, y as Number, w as Number, h as Number) as Void {
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.frameColor(), Graphics.COLOR_TRANSPARENT);
         dc.fillRoundedRectangle(x, y, w, h, 3);
 
         var panelHeight = (h * (1.0 - openness())).toNumber();

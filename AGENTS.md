@@ -205,6 +205,13 @@ confirms delivery.
     FIT data".
   - Writing a string longer than `count - 1` crashes the app.
   - Keep per-second record fields numeric.
+- **Never hardcode a black or white background.** The Edge has a light and a dark mode
+  and switches between them, so a fixed background is wrong half the time — a glance
+  that clears to black is a black rectangle among white ones at noon.
+  `System.getDeviceSettings().isNightModeEnabled` (API 4.1.2, on every Edge here) gives
+  the current mode, and `AppBase.onNightModeChanged` fires when it changes. Accent
+  colours need the same treatment: bright green and yellow read well on black and all
+  but vanish on white. `source/Theme.mc` holds the resolved colours for this repo.
 - **Logs stay on the device.**
   - `System.println` writes to `Garmin/Apps/LOGS/<PRG name>.TXT`, **but only if that
     file already exists**. `install.sh field` creates `HaArrival.TXT`.
@@ -223,6 +230,14 @@ confirms delivery.
   `~/.Garmin/ConnectIQ/compat-libs` exists.
 - **`./test.sh` prints its results in the terminal** and needs no input into the
   simulator.
+- **A locked screen makes every screenshot black.** X11 grabs read the screen, so once
+  the session locks and the monitor powers down there is nothing to read, and reading
+  the window's pixmap directly fails too. Run the simulator on a nested display
+  instead — `Xephyr :99 -screen 1100x1000 -ac -noreset`, then start the simulator and
+  `monkeydo` with `DISPLAY=:99` and grab `:99`. It keeps its own framebuffer whatever
+  the real screen is doing, and it never touches the user's desktop.
+- **Toggling the device theme** is Settings > Night Mode in the simulator's menu bar,
+  which is how to check both colour schemes without waiting for sunset.
 
 ## Publishing a fork to the store
 

@@ -108,19 +108,19 @@ class StateReader {
 
     function color() as ColorValue {
         if (!(_state instanceof String)) {
-            return Graphics.COLOR_LT_GRAY;
+            return Theme.unknownColor();
         }
         var s = _state as String;
         if (s.equals("closed") || s.equals("off") || s.equals("locked")) {
-            return Graphics.COLOR_GREEN;
+            return Theme.closedColor();
         }
         if (s.equals("opening") || s.equals("closing")) {
-            return Graphics.COLOR_YELLOW;
+            return Theme.movingColor();
         }
         if (s.equals("unavailable") || s.equals("unknown")) {
-            return Graphics.COLOR_LT_GRAY;
+            return Theme.unknownColor();
         }
-        return Graphics.COLOR_ORANGE;
+        return Theme.openColor();
     }
 
     //! A frame with a panel that sits low when closed and high when open, the same shape

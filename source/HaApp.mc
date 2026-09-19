@@ -14,6 +14,13 @@ class HaApp extends Application.AppBase {
     function onStop(state as Dictionary?) as Void {
     }
 
+    //! The Edge flips between light and dark while an app is open — at sunset, or when
+    //! the rider changes the setting. Redraw so the colours follow it straight away
+    //! rather than at the next state refresh.
+    function onNightModeChanged() as Void {
+        WatchUi.requestUpdate();
+    }
+
     function getInitialView() as [Views] or [Views, InputDelegates] {
         var actions = AppConfig.actions();
         if (actions.size() > 1) {

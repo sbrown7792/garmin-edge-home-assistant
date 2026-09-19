@@ -198,6 +198,13 @@ state is cached, so the glance renders instantly and then refreshes.
 It works for anything with a meaningful state, not just covers — `off`/`locked` read as
 closed, everything else as open.
 
+Both screens follow the Edge's **light and dark mode** rather than picking a background
+of their own, so the glance is not a black rectangle among white ones at midday. The
+state colours shift with it: bright green and yellow read well on black but vanish on
+white, so light mode uses a darker green and an amber. The device reports its current
+mode through `DeviceSettings.isNightModeEnabled`, and `onNightModeChanged` redraws an
+open screen the moment it switches.
+
 ## 1. Configure your actions
 
 For a sideloaded build, configuration lives in `config/personal/Config.mc` (gitignored,

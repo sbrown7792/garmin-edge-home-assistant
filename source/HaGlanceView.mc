@@ -20,7 +20,7 @@ class HaGlanceView extends WatchUi.GlanceView {
     function onUpdate(dc as Dc) as Void {
         var height = dc.getHeight();
 
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
+        dc.setColor(Theme.text(), Theme.background());
         dc.clear();
 
         var textX = 6;
@@ -31,7 +31,7 @@ class HaGlanceView extends WatchUi.GlanceView {
             textX = 6 + doorWidth + 10;
         }
 
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.text(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(textX, height / 3, Graphics.FONT_SMALL, title(),
                     Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 

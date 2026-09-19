@@ -52,10 +52,10 @@ class ActionView extends WatchUi.View {
         var width = dc.getWidth();
         var height = dc.getHeight();
 
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_WHITE);
+        dc.setColor(Theme.text(), Theme.background());
         dc.clear();
 
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.text(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(width / 2, (height * 0.09).toNumber(), Graphics.FONT_MEDIUM, title(),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
@@ -85,7 +85,7 @@ class ActionView extends WatchUi.View {
         dc.drawText(width / 2, buttonY + (buttonHeight / 2), Graphics.FONT_LARGE, buttonLabel(),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        dc.setColor(Graphics.COLOR_DK_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.setColor(Theme.dimText(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(width / 2, (height * 0.85).toNumber(), Graphics.FONT_SMALL, footerText(),
                     Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }

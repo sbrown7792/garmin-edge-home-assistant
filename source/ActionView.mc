@@ -1,14 +1,11 @@
 import Toybox.Graphics;
 import Toybox.Lang;
-import Toybox.Timer;
 import Toybox.WatchUi;
 
 class ActionView extends WatchUi.View {
 
     private var _runner as ActionRunner;
     private var _reader as StateReader;
-    private var _refresh as Timer.Timer?;
-    private var _refreshesLeft as Number = 0;
 
     function initialize(runner as ActionRunner) {
         View.initialize();
@@ -16,36 +13,19 @@ class ActionView extends WatchUi.View {
         _reader = new StateReader(runner.getEntity());
     }
 
+    //! Opening the screen while the door is still travelling follows it to rest too.
     function onShow() as Void {
-        _reader.refresh();
+        _reader.follow(null);
     }
 
     function onHide() as Void {
-        stopRefresh();
+        _reader.stop();
     }
 
-    //! A cover takes seconds to travel, so look again twice after a press rather than
-    //! leaving the screen showing the state from before the button was pressed.
+    //! A door takes about 15 s to travel, so keep reading until it stops rather than
+    //! leaving whatever the first read caught mid-way.
     function scheduleRefresh() as Void {
-        stopRefresh();
-        _refreshesLeft = 2;
-        _refresh = new Timer.Timer();
-        (_refresh as Timer.Timer).start(method(:onRefreshTick), 4000, true);
-    }
-
-    function onRefreshTick() as Void {
-        _reader.refresh();
-        _refreshesLeft -= 1;
-        if (_refreshesLeft <= 0) {
-            stopRefresh();
-        }
-    }
-
-    private function stopRefresh() as Void {
-        if (_refresh != null) {
-            (_refresh as Timer.Timer).stop();
-            _refresh = null;
-        }
+        _reader.follow(_reader.getState());
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -64,7 +44,10 @@ class ActionView extends WatchUi.View {
         var buttonY = (height * 0.42).toNumber();
 
         if (_reader.hasEntity()) {
-            var state = _reader.stateText();
+            var state = _reader.problemText();
+            if (state == null) {
+                state = _reader.stateText();
+            }
             if (state instanceof String) {
                 dc.setColor(_reader.color(), Graphics.COLOR_TRANSPARENT);
                 dc.drawText(width / 2, (height * 0.18).toNumber(), Graphics.FONT_SMALL,

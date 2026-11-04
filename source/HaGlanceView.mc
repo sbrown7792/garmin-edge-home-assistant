@@ -1,12 +1,19 @@
 import Toybox.Application;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Timer;
 import Toybox.WatchUi;
 
 (:glance)
 class HaGlanceView extends WatchUi.GlanceView {
 
+    // The Edge keeps its glances running (liveUpdates in the device profile), so a
+    // single read when the glance starts would go stale for as long as it stays up,
+    // missing the door being moved from Home Assistant or the wall button.
+    private const REREAD_MS = 60000;
+
     private var _reader as StateReader;
+    private var _reread as Timer.Timer?;
 
     function initialize() {
         GlanceView.initialize();
@@ -14,7 +21,24 @@ class HaGlanceView extends WatchUi.GlanceView {
     }
 
     function onShow() as Void {
-        _reader.refresh();
+        _reader.follow(null);
+        if (_reread == null) {
+            _reread = new Timer.Timer();
+        }
+        var reread = _reread as Timer.Timer;
+        reread.stop();
+        reread.start(method(:onReread), REREAD_MS, true);
+    }
+
+    function onHide() as Void {
+        if (_reread != null) {
+            (_reread as Timer.Timer).stop();
+        }
+        _reader.stop();
+    }
+
+    function onReread() as Void {
+        _reader.follow(null);
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -56,6 +80,10 @@ class HaGlanceView extends WatchUi.GlanceView {
     }
 
     private function subtitle() as String {
+        var problem = _reader.problemText();
+        if (problem instanceof String) {
+            return problem as String;
+        }
         var state = _reader.stateText();
         if (state instanceof String) {
             return state as String;

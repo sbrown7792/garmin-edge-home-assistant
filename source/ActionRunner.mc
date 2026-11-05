@@ -3,6 +3,7 @@ import Toybox.Attention;
 import Toybox.Communications;
 import Toybox.Lang;
 import Toybox.System;
+import Toybox.Time;
 import Toybox.Timer;
 import Toybox.WatchUi;
 
@@ -21,9 +22,39 @@ class ActionRunner {
     private var _detail as String = "";
     private var _watchdog as Timer.Timer?;
     private var _sentAt as Number = 0;
+    // Waiting out a press sent before the screen was last closed: no answer will come to
+    // this run of the app, so the wait ends quietly rather than as a failure.
+    private var _inherited as Boolean = false;
 
     function initialize(action as Dictionary<Symbol, String>) {
         _action = action;
+        inheritPending();
+    }
+
+    //! Leaving the screen does not take a press back. Garmin Connect may still be holding
+    //! it, so a press sent in the last LOST_MS keeps this screen in its waiting state even
+    //! after the app is closed and reopened. The time is wall-clock, so it stays right
+    //! across an Edge restart, where System.getTimer() would start again from zero.
+    private function inheritPending() as Void {
+        var since = Application.Storage.getValue(pendingKey());
+        if (!(since instanceof Number)) {
+            return;
+        }
+        var ageMs = (Time.now().value() - (since as Number)) * 1000;
+        if (ageMs < 0 || ageMs >= LOST_MS) {
+            Application.Storage.deleteValue(pendingKey());
+            return;
+        }
+        Log.line("press from " + ageMs / 1000 + " s ago still unanswered; holding presses");
+        _state = RUN_SENDING;
+        _detail = "Last press still waiting";
+        _inherited = true;
+        _watchdog = new Timer.Timer();
+        (_watchdog as Timer.Timer).start(method(:onLost), LOST_MS - ageMs, false);
+    }
+
+    private function pendingKey() as String {
+        return "pending:" + getLabel();
     }
 
     function getLabel() as String {
@@ -68,6 +99,7 @@ class ActionRunner {
         Log.line("press " + getLabel() + " POST " +
                  (event instanceof String ? "/api/events/" + event : "(not an event)") + " " +
                  Log.links());
+        Application.Storage.setValue(pendingKey(), Time.now().value());
         startWatchdog();
 
         Communications.makeWebRequest(url, buildBody(), {
@@ -79,6 +111,7 @@ class ActionRunner {
 
     function onResponse(responseCode as Number, data as Dictionary or String or Null) as Void {
         stopWatchdog();
+        Application.Storage.deleteValue(pendingKey());
         Log.line("press -> " + responseCode + " in " + (System.getTimer() - _sentAt) + " ms " +
                  Log.links() + " body=" + Log.brief(data));
         if (responseCode >= 200 && responseCode < 300) {
@@ -169,13 +202,24 @@ class ActionRunner {
 
     function onLost() as Void {
         stopWatchdog();
-        if (_state == RUN_SENDING) {
+        Application.Storage.deleteValue(pendingKey());
+        if (_state != RUN_SENDING) {
+            return;
+        }
+        if (_inherited) {
+            // The press belonged to an earlier run of the app; its fate is unknown here,
+            // and the state line shows whether the door moved. Just allow presses again.
+            Log.line("earlier press written off; presses allowed again");
+            _inherited = false;
+            _state = RUN_READY;
+            _detail = "";
+        } else {
             Log.line("press written off after " + LOST_MS + " ms " + Log.links());
             _state = RUN_FAILED;
             _detail = "No reply in 2 min";
             alert(false);
-            WatchUi.requestUpdate();
         }
+        WatchUi.requestUpdate();
     }
 
     private function buildBody() as Dictionary<Object, Object> {

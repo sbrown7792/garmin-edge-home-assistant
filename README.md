@@ -445,6 +445,7 @@ HA Control, on the button screen:
 | `Check token` | 401/403 — token missing, wrong, or expired |
 | `Not found on server` | 404 — webhook ID or service name does not match |
 | `Waiting for phone` | 20 s without an answer. The press is still pending and further presses are ignored until the relay answers, so two queued toggles cannot open and then shut the door |
+| `Last press still waiting` | The screen was closed and reopened within 2 minutes of a press that never got an answer. Presses are ignored until those 2 minutes are up, then the button returns to normal |
 | `Link dropped` | -1004 — the relay lost the connection before an answer came back, typical in the first minutes after an Edge restart |
 | `Queue full` | -101 — too many requests waiting at the relay |
 | `No reply in 2 min` | The relay never answered at all |

@@ -107,7 +107,8 @@ class ActionView extends WatchUi.View {
     private function footerText() as String {
         switch (_runner.getState()) {
             case RUN_SENDING:
-                return "Contacting Home Assistant";
+                var detail = _runner.getDetail();
+                return detail.length() > 0 ? detail : "Contacting Home Assistant";
             case RUN_SENT:
                 return "Sent at " + _runner.getDetail();
             case RUN_FAILED:

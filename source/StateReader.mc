@@ -15,9 +15,14 @@ class StateReader {
     // a door that takes about 15 s plus however long Home Assistant takes to notice.
     private const FOLLOW_MS = 3000;
     private const FOLLOW_READS = 15;
-    // The phone relay sometimes never answers. Without a limit, one lost reply would
-    // block every later read for the life of the glance, which can be hours.
-    private const STUCK_MS = 20000;
+    // After an Edge restart the phone relay can sit on requests for a minute or more
+    // and then fail them all at once (seen: 53 s and 77 s, then -1004). Sending another
+    // meanwhile only fills its queue until everything bounces with -101. So one read at
+    // a time: past WAIT_MS the screen says so, and only past LOST_MS is the read written
+    // off, in case the relay really did drop it and a glance would otherwise wait for
+    // hours.
+    private const WAIT_MS = 20000;
+    private const LOST_MS = 120000;
 
     private var _entity as String;
     private var _state as String?;
@@ -130,13 +135,19 @@ class StateReader {
             return;
         }
         if (_busy) {
-            if (System.getTimer() - _busySince < STUCK_MS) {
+            var waited = System.getTimer() - _busySince;
+            if (waited < WAIT_MS) {
                 return;
             }
-            // The last read never came back. Say so while trying again.
-            Log.line(_tag + " read #" + _reads + " never answered; sending again");
-            _problem = "No reply";
-            WatchUi.requestUpdate();
+            if (waited < LOST_MS) {
+                if (_problem == null || !(_problem as String).equals("Waiting for phone")) {
+                    Log.line(_tag + " read #" + _reads + " still waiting after " + waited + " ms");
+                    _problem = "Waiting for phone";
+                    WatchUi.requestUpdate();
+                }
+                return;
+            }
+            Log.line(_tag + " read #" + _reads + " written off after " + waited + " ms");
         }
         _busy = true;
         _busySince = System.getTimer();
@@ -211,6 +222,12 @@ class StateReader {
         }
         if (code == Communications.SECURE_CONNECTION_REQUIRED) {
             return "HTTPS required";
+        }
+        if (code == Communications.REQUEST_CONNECTION_DROPPED) {
+            return "Link dropped";
+        }
+        if (code == Communications.BLE_QUEUE_FULL) {
+            return "Queue full";
         }
         return "Error " + code.toString();
     }

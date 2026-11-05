@@ -45,7 +45,11 @@ class ActionRunner {
     }
 
     function run() as Void {
+        // Includes the "Waiting for phone" stretch. A press that times out on screen can
+        // still be delivered later, and with cover.toggle a second queued press would
+        // open the door and then shut it again.
         if (_state == RUN_SENDING) {
+            Log.line("press ignored: the last one has not been answered");
             return;
         }
 
@@ -133,10 +137,16 @@ class ActionRunner {
 
     //! A relay that silently drops a reply would otherwise leave SENDING on screen for
     //! ever, which looks identical to a slow network.
+    //! The relay can hold a request for a minute or more before answering (seen: 77 s,
+    //! after an Edge restart), so silence at WAIT_MS is not failure. The press stays
+    //! pending and says so; only at LOST_MS is it written off.
+    private const WAIT_MS = 20000;
+    private const LOST_MS = 120000;
+
     private function startWatchdog() as Void {
         stopWatchdog();
         _watchdog = new Timer.Timer();
-        (_watchdog as Timer.Timer).start(method(:onTimeout), 20000, false);
+        (_watchdog as Timer.Timer).start(method(:onTimeout), WAIT_MS, false);
     }
 
     private function stopWatchdog() as Void {
@@ -149,9 +159,20 @@ class ActionRunner {
     function onTimeout() as Void {
         stopWatchdog();
         if (_state == RUN_SENDING) {
-            Log.line("press -> no reply in 20 s " + Log.links());
+            Log.line("press still waiting after " + WAIT_MS + " ms " + Log.links());
+            _detail = "Waiting for phone";
+            WatchUi.requestUpdate();
+            _watchdog = new Timer.Timer();
+            (_watchdog as Timer.Timer).start(method(:onLost), LOST_MS - WAIT_MS, false);
+        }
+    }
+
+    function onLost() as Void {
+        stopWatchdog();
+        if (_state == RUN_SENDING) {
+            Log.line("press written off after " + LOST_MS + " ms " + Log.links());
             _state = RUN_FAILED;
-            _detail = "No reply in 20s";
+            _detail = "No reply in 2 min";
             alert(false);
             WatchUi.requestUpdate();
         }
@@ -227,6 +248,12 @@ class ActionRunner {
         }
         if (code == 404) {
             return "Not found on server";
+        }
+        if (code == Communications.REQUEST_CONNECTION_DROPPED) {
+            return "Link dropped";
+        }
+        if (code == Communications.BLE_QUEUE_FULL) {
+            return "Queue full";
         }
         return "Error " + code.toString();
     }

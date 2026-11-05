@@ -25,6 +25,8 @@ class StateReader {
     private var _busy as Boolean = false;
     private var _busySince as Number = 0;
     private var _problem as String?;
+    // Set by an answer that reading again cannot fix (404, bad token): ends a follow.
+    private var _stopped as Boolean = false;
 
     private var _timer as Timer.Timer?;
     private var _readsLeft as Number = 0;
@@ -107,7 +109,7 @@ class StateReader {
         if (DoorMotion.isMoving(_state)) {
             _seenMoving = true;
         }
-        if (_problem != null || !DoorMotion.keepReading(_state, _from, _seenMoving)) {
+        if (_stopped || !DoorMotion.keepReading(_state, _from, _seenMoving)) {
             stop();
         }
     }
@@ -118,8 +120,13 @@ class StateReader {
         if (_entity.length() == 0 || base.length() == 0 || token.length() == 0) {
             return;
         }
-        if (_busy && System.getTimer() - _busySince < STUCK_MS) {
-            return;
+        if (_busy) {
+            if (System.getTimer() - _busySince < STUCK_MS) {
+                return;
+            }
+            // The last read never came back. Say so while trying again.
+            _problem = "No reply";
+            WatchUi.requestUpdate();
         }
         _busy = true;
         _busySince = System.getTimer();
@@ -136,14 +143,21 @@ class StateReader {
 
     function onState(responseCode as Number, data as Dictionary or String or Null) as Void {
         _busy = false;
+        _stopped = false;
         if (responseCode == 404 || responseCode == 401 || responseCode == 403) {
-            // Say so rather than keep showing the last state seen. A 404 usually means
-            // the entity was renamed in Home Assistant, which re-adding an integration
-            // does, and that is invisible from the Edge otherwise.
+            // Reading again will not help, and the last state seen is not worth showing.
+            // A 404 usually means the entity was renamed in Home Assistant, which
+            // re-adding an integration does, and that is invisible from the Edge
+            // otherwise.
             _problem = responseCode == 404 ? "Not found in HA" : "Check token";
+            _stopped = true;
             _state = null;
             Application.Storage.deleteValue("state:" + _entity);
-        } else if (responseCode == 200 && data instanceof Dictionary) {
+        } else if (responseCode != 200 || !(data instanceof Dictionary)) {
+            // No phone, a timeout and the like. Offline is normal on a bike, so the door
+            // keeps its last known position, but the text says why it is not fresh.
+            _problem = describe(responseCode);
+        } else {
             _problem = null;
             var state = data["state"];
             if (state instanceof String) {
@@ -159,15 +173,37 @@ class StateReader {
                 }
             }
         }
-        // Anything else (no phone, a timeout) keeps the last state seen: offline is normal
-        // on a bike, and the last known position is still the best guess.
         checkSettled();
         WatchUi.requestUpdate();
     }
 
-    //! Shown in place of the state when Home Assistant refused to give one.
+    //! Worded like HA Arrival's field, and short enough for the glance.
+    private function describe(code as Number) as String {
+        if (code == 200) {
+            return "Bad reply";
+        }
+        if (code == Communications.BLE_CONNECTION_UNAVAILABLE) {
+            return "No phone";
+        }
+        if (code == Communications.BLE_HOST_TIMEOUT || code == Communications.BLE_SERVER_TIMEOUT ||
+            code == Communications.NETWORK_REQUEST_TIMED_OUT) {
+            return "HA timeout";
+        }
+        if (code == Communications.SECURE_CONNECTION_REQUIRED) {
+            return "HTTPS required";
+        }
+        return "Error " + code.toString();
+    }
+
+    //! Why the last read failed, shown in place of the state; null after a good read.
     function problemText() as String? {
         return _problem;
+    }
+
+    //! Colour for whichever of problemText() or stateText() is on screen. A problem is
+    //! grey whatever the door's last colour, so "No phone" never reads as a state.
+    function textColor() as ColorValue {
+        return _problem != null ? Theme.unknownColor() : color();
     }
 
     function stateText() as String? {

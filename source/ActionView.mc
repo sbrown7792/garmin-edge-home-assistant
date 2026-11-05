@@ -49,7 +49,7 @@ class ActionView extends WatchUi.View {
                 state = _reader.stateText();
             }
             if (state instanceof String) {
-                dc.setColor(_reader.color(), Graphics.COLOR_TRANSPARENT);
+                dc.setColor(_reader.textColor(), Graphics.COLOR_TRANSPARENT);
                 dc.drawText(width / 2, (height * 0.18).toNumber(), Graphics.FONT_SMALL,
                             state as String,
                             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);

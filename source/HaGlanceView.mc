@@ -59,7 +59,7 @@ class HaGlanceView extends WatchUi.GlanceView {
         dc.drawText(textX, height / 3, Graphics.FONT_SMALL, title(),
                     Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        dc.setColor(_reader.color(), Graphics.COLOR_TRANSPARENT);
+        dc.setColor(_reader.textColor(), Graphics.COLOR_TRANSPARENT);
         dc.drawText(textX, (height * 2) / 3, Graphics.FONT_XTINY, subtitle(),
                     Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }

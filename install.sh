@@ -34,21 +34,19 @@ for out in "${OUTPUTS[@]}"; do
 done
 
 # Connect IQ only writes a sideloaded app's println output if a log file with the app's
-# name already exists, so create an empty one for each app's log.
-create_log() {
-    local log="$URI$STORAGE/Garmin/Apps/LOGS/$1.TXT"
-    if ! gio info "$log" >/dev/null 2>&1; then
-        local empty
-        empty="$(mktemp)"
-        gio copy "$empty" "$log"
-        rm -f "$empty"
-        echo "Created $log"
-    fi
-}
+# name already exists, so create an empty one for the data field's ride log. The device
+# names it after the .prg the app was *first* installed as, which is HaArrival unless
+# you renamed the build.
 case "$VARIANT" in
-    app)   create_log HaControl ;;
-    field) create_log HaArrival ;;
-    both)  create_log HaControl; create_log HaArrival ;;
+    field|both)
+        LOG="$URI$STORAGE/Garmin/Apps/LOGS/HaArrival.TXT"
+        if ! gio info "$LOG" >/dev/null 2>&1; then
+            EMPTY="$(mktemp)"
+            gio copy "$EMPTY" "$LOG"
+            rm -f "$EMPTY"
+            echo "Created $LOG"
+        fi
+        ;;
 esac
 
 echo "Eject the Edge and restart it before looking for the app."

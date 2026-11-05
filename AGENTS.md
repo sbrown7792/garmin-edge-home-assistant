@@ -135,27 +135,29 @@ confirms delivery.
   succeeded.**
 - **The simulator is more lenient than the relay** and reports success for all three
   endpoints. Only a real device proves the reply path.
-- **The relay holds requests rather than losing them.** For the first minutes after an
-  Edge restart, Garmin Connect can sit on every request even though the Edge reports
-  `phoneConnected` true and Bluetooth connected. Then it fails them all in the same
-  second, seen at 53 s and 77 s with -1004 and 0, and from then on answers in under a
-  second. Consequences:
+- **The relay holds requests rather than losing them.** When the phone cannot reach the
+  server, Garmin Connect sits on every request, though the Edge reports
+  `phoneConnected` true and Bluetooth connected, and fails each one after 40 to 77 s
+  with 0, -300 or -1004. Consequences:
   - Never resend because an answer is late; that only fills the queue, and then every
     request bounces at once with -101 (`BLE_QUEUE_FULL`). `StateReader` keeps one read
     in flight and writes it off only after 2 minutes.
   - A press that has timed out on screen can still be delivered later. `ActionRunner`
-    keeps it pending ("Waiting for phone") and ignores further presses until the relay
-    answers, so queued `cover.toggle` presses cannot cancel each other out.
-  - Nothing an app can do speeds up the relay's recovery. What fixed it on the
-    reference phone was turning the VPN off and on, while the Edge reported the phone
-    connected throughout and other apps on the phone reached Home Assistant fine. That
-    points at Garmin Connect reusing a stale connection. As an experiment, HA Control's
-    requests send `Connection: close`, which Connect IQ accepts. Whether Garmin Connect
-    honours it is still unproven; if the stalls continue, it can go.
+    keeps it pending ("Waiting for phone"), saves that in storage so reopening the
+    screen does not reset it, and ignores further presses until the relay answers or 2
+    minutes pass. Queued `cover.toggle` presses cannot cancel each other out.
+- **Test from the phone before blaming anything else.** Ask the human to open the same
+  URL the Edge uses, plus `/api/`, in the phone's browser: `401` means the phone's
+  route works, a timeout means it does not. On the reference setup this took an evening
+  to find. The home firewall only let VPN clients reach the proxy, the phone's traffic
+  sometimes left the tunnel, and a laptop on the VPN reached Home Assistant throughout,
+  which made the server look fine. Restarts, Bluetooth and Garmin Connect were all red
+  herrings, and so was a `Connection: close` experiment.
 - **Timers are capped per app.** In the Edge 1040 simulator, three running timers
-  worked and starting a fourth threw "Too Many Timers Error". The button screen uses two (the reader's follow loop and the press
-  watchdog), and the glance uses two (follow and the once-a-minute re-read). A new
-  timer on either needs one of those to be shared.
+  worked and starting a fourth threw "Too Many Timers Error". The button screen uses
+  two (the reader's follow loop and the press watchdog), and the glance uses two
+  (follow and the once-a-minute re-read). A new timer on either needs one of those to
+  be shared.
 - **Connect IQ's own error codes are negative,** running from -1 into the -1000s. The
   field's private codes are -9001 to -9003 for that reason. Keep any new ones clear of
   that range.
@@ -248,14 +250,14 @@ confirms delivery.
   but vanish on white. `source/Theme.mc` holds the resolved colours for this repo.
 - **Logs stay on the device.**
   - `System.println` writes to `Garmin/Apps/LOGS/<PRG name>.TXT`, **but only if that
-    file already exists**. `install.sh` creates `HaControl.TXT` and `HaArrival.TXT` for
-    whichever apps it installs. HA Control logs every read and press through
-    `source/Log.mc`, with the response code, how long the reply took and the Edge's own
-    view of its phone link. Read it before guessing at a connection problem.
+    file already exists**. `install.sh field` creates `HaArrival.TXT`. HA Control has
+    no logging now. The per-request log that found the firewall problem (code, time
+    taken, the Edge's view of its phone link) is in git history, in "Log every read
+    and press to HaControl.TXT", if a connection problem needs it again.
   - **The log is named after the app's first install, not the current `.prg`.** The
     Edge records a sideloaded app under the file name it first arrived with and keeps
-    that name through every update with the same app ID. An HA Control first installed
-    as `Garage.prg` logs to `LOGS/Garage.TXT`, and `HaControl.TXT` stays empty. The
+    that name through every update with the same app ID. An app first installed as
+    `Garage.prg` logs to `LOGS/Garage.TXT`, whatever the `.prg` is called now. The
     names the device actually uses are visible in `Garmin/Apps/DATA` (`<name>.DAT`) and
     `Garmin/Apps/SETTINGS` (`<name>.SET`). Create the log under that name.
   - **Connect IQ response code 0 is `UNKNOWN_ERROR`:** the relay failed without saying

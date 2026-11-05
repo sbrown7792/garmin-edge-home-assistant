@@ -17,7 +17,7 @@ class HaGlanceView extends WatchUi.GlanceView {
 
     function initialize() {
         GlanceView.initialize();
-        _reader = new StateReader(AppConfig.statusEntity(), "glance");
+        _reader = new StateReader(AppConfig.statusEntity());
     }
 
     function onShow() as Void {

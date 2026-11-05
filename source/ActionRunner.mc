@@ -21,7 +21,6 @@ class ActionRunner {
     private var _state as RunState = RUN_READY;
     private var _detail as String = "";
     private var _watchdog as Timer.Timer?;
-    private var _sentAt as Number = 0;
     // Waiting out a press sent before the screen was last closed: no answer will come to
     // this run of the app, so the wait ends quietly rather than as a failure.
     private var _inherited as Boolean = false;
@@ -45,7 +44,6 @@ class ActionRunner {
             Application.Storage.deleteValue(pendingKey());
             return;
         }
-        Log.line("press from " + ageMs / 1000 + " s ago still unanswered; holding presses");
         _state = RUN_SENDING;
         _detail = "Last press still waiting";
         _inherited = true;
@@ -80,7 +78,6 @@ class ActionRunner {
         // still be delivered later, and with cover.toggle a second queued press would
         // open the door and then shut it again.
         if (_state == RUN_SENDING) {
-            Log.line("press ignored: the last one has not been answered");
             return;
         }
 
@@ -94,11 +91,6 @@ class ActionRunner {
         _detail = "";
         WatchUi.requestUpdate();
 
-        _sentAt = System.getTimer();
-        var event = _action[:event];
-        Log.line("press " + getLabel() + " POST " +
-                 (event instanceof String ? "/api/events/" + event : "(not an event)") + " " +
-                 Log.links());
         Application.Storage.setValue(pendingKey(), Time.now().value());
         startWatchdog();
 
@@ -112,8 +104,6 @@ class ActionRunner {
     function onResponse(responseCode as Number, data as Dictionary or String or Null) as Void {
         stopWatchdog();
         Application.Storage.deleteValue(pendingKey());
-        Log.line("press -> " + responseCode + " in " + (System.getTimer() - _sentAt) + " ms " +
-                 Log.links() + " body=" + Log.brief(data));
         if (responseCode >= 200 && responseCode < 300) {
             _state = RUN_SENT;
             _detail = clockString();
@@ -168,11 +158,11 @@ class ActionRunner {
         return Communications.HTTP_RESPONSE_CONTENT_TYPE_TEXT_PLAIN;
     }
 
-    //! A relay that silently drops a reply would otherwise leave SENDING on screen for
-    //! ever, which looks identical to a slow network.
-    //! The relay can hold a request for a minute or more before answering (seen: 77 s,
-    //! after an Edge restart), so silence at WAIT_MS is not failure. The press stays
-    //! pending and says so; only at LOST_MS is it written off.
+    //! Without a watchdog, a relay that drops a reply would leave SENDING on screen for
+    //! ever. But silence at WAIT_MS is not failure either: the relay can hold a request
+    //! for a minute or more before answering (seen: 77 s, while the phone could not
+    //! reach the server). So the press stays pending and says so, and only at LOST_MS
+    //! is it written off.
     private const WAIT_MS = 20000;
     private const LOST_MS = 120000;
 
@@ -192,7 +182,6 @@ class ActionRunner {
     function onTimeout() as Void {
         stopWatchdog();
         if (_state == RUN_SENDING) {
-            Log.line("press still waiting after " + WAIT_MS + " ms " + Log.links());
             _detail = "Waiting for phone";
             WatchUi.requestUpdate();
             _watchdog = new Timer.Timer();
@@ -209,12 +198,10 @@ class ActionRunner {
         if (_inherited) {
             // The press belonged to an earlier run of the app; its fate is unknown here,
             // and the state line shows whether the door moved. Just allow presses again.
-            Log.line("earlier press written off; presses allowed again");
             _inherited = false;
             _state = RUN_READY;
             _detail = "";
         } else {
-            Log.line("press written off after " + LOST_MS + " ms " + Log.links());
             _state = RUN_FAILED;
             _detail = "No reply in 2 min";
             alert(false);
@@ -252,14 +239,10 @@ class ActionRunner {
         if (needsAuth && token.length() > 0) {
             headers["Authorization"] = "Bearer " + token;
         }
-        // Same experiment as StateReader.refresh(): no reuse of a possibly stale
-        // connection on the phone.
-        headers["Connection"] = "close";
         return headers;
     }
 
     private function fail(message as String) as Void {
-        Log.line("press not sent: " + message);
         _state = RUN_FAILED;
         _detail = message;
         WatchUi.requestUpdate();

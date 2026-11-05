@@ -15,12 +15,12 @@ class StateReader {
     // a door that takes about 15 s plus however long Home Assistant takes to notice.
     private const FOLLOW_MS = 3000;
     private const FOLLOW_READS = 15;
-    // After an Edge restart the phone relay can sit on requests for a minute or more
-    // and then fail them all at once (seen: 53 s and 77 s, then -1004). Sending another
-    // meanwhile only fills its queue until everything bounces with -101. So one read at
-    // a time: past WAIT_MS the screen says so, and only past LOST_MS is the read written
-    // off, in case the relay really did drop it and a glance would otherwise wait for
-    // hours.
+    // When the phone cannot reach the server, the relay holds each request until the
+    // phone gives up, a minute or more (seen: 40 to 77 s, then 0, -300 or -1004).
+    // Sending another meanwhile only fills its queue until everything bounces with
+    // -101. So one read at a time: past WAIT_MS the screen says so, and only past
+    // LOST_MS is the read written off, in case the relay really did drop it and a
+    // glance would otherwise wait for hours.
     private const WAIT_MS = 20000;
     private const LOST_MS = 120000;
 
@@ -38,13 +38,8 @@ class StateReader {
     private var _from as String?;
     private var _seenMoving as Boolean = false;
 
-    // "glance" or "screen", so the log says which of the two made each request.
-    private var _tag as String;
-    private var _reads as Number = 0;
-
-    function initialize(entity as String, tag as String) {
+    function initialize(entity as String) {
         _entity = entity;
-        _tag = tag;
         var cached = Application.Storage.getValue("state:" + entity);
         if (cached instanceof String) {
             _state = cached as String;
@@ -80,8 +75,6 @@ class StateReader {
     //! cannot end the loop early, and the loop ends after FOLLOW_READS ticks whatever
     //! the relay does.
     function follow(from as String?) as Void {
-        Log.line(_tag + " follow from=" + (from != null ? from : "-") +
-                 " cached=" + (_state != null ? _state : "-"));
         _readsLeft = FOLLOW_READS;
         _from = from;
         _seenMoving = false;
@@ -106,7 +99,6 @@ class StateReader {
     function onFollowTick() as Void {
         _readsLeft -= 1;
         if (_readsLeft <= 0) {
-            Log.line(_tag + " follow gave up at " + (_state != null ? _state : "-"));
             stop();
             return;
         }
@@ -123,7 +115,6 @@ class StateReader {
             _seenMoving = true;
         }
         if (_stopped || !DoorMotion.keepReading(_state, _from, _seenMoving)) {
-            Log.line(_tag + " follow done at " + (_state != null ? _state : "-"));
             stop();
         }
     }
@@ -141,26 +132,17 @@ class StateReader {
             }
             if (waited < LOST_MS) {
                 if (_problem == null || !(_problem as String).equals("Waiting for phone")) {
-                    Log.line(_tag + " read #" + _reads + " still waiting after " + waited + " ms");
                     _problem = "Waiting for phone";
                     WatchUi.requestUpdate();
                 }
                 return;
             }
-            Log.line(_tag + " read #" + _reads + " written off after " + waited + " ms");
         }
         _busy = true;
         _busySince = System.getTimer();
-        _reads += 1;
-        Log.line(_tag + " read #" + _reads + " GET /api/states/" + _entity + " " + Log.links());
 
         var headers = {} as Dictionary<Object, Object>;
         headers["Authorization"] = "Bearer " + token;
-        // Experiment. Garmin Connect has been seen hanging every request for minutes
-        // until the phone's VPN reconnected, while other apps reached Home Assistant
-        // fine: it looks like a pooled connection gone stale. "close" asks for a fresh
-        // connection per request, at the cost of a TLS handshake each time.
-        headers["Connection"] = "close";
 
         Communications.makeWebRequest(base + "/api/states/" + _entity, null, {
             :method => Communications.HTTP_REQUEST_METHOD_GET,
@@ -170,16 +152,8 @@ class StateReader {
     }
 
     function onState(responseCode as Number, data as Dictionary or String or Null) as Void {
-        var took = System.getTimer() - _busySince;
         _busy = false;
         _stopped = false;
-        if (responseCode == 200 && data instanceof Dictionary) {
-            Log.line(_tag + " read #" + _reads + " -> 200 in " + took + " ms state=" +
-                     Log.brief((data as Dictionary)["state"]));
-        } else {
-            Log.line(_tag + " read #" + _reads + " -> " + responseCode + " in " + took + " ms " +
-                     Log.links() + " body=" + Log.brief(data));
-        }
         if (responseCode == 404 || responseCode == 401 || responseCode == 403) {
             // Reading again will not help, and the last state seen is not worth showing.
             // A 404 usually means the entity was renamed in Home Assistant, which

@@ -10,7 +10,7 @@ class ActionView extends WatchUi.View {
     function initialize(runner as ActionRunner) {
         View.initialize();
         _runner = runner;
-        _reader = new StateReader(runner.getEntity(), "screen");
+        _reader = new StateReader(runner.getEntity());
     }
 
     //! Opening the screen while the door is still travelling follows it to rest too.

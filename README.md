@@ -184,31 +184,9 @@ It prints each event with the distance, flags and response code at that moment, 
 summary of GPS coverage. Timer events are logged even though only STOP acts, so the log
 also confirms which callback each physical button produced on your device.
 
-### Diagnosing HA Control
-
-HA Control writes a line for every start, state read and button press to
-`Garmin/Apps/LOGS/HaControl.TXT`, which `install.sh app` creates. Each line gives the
-response code, how long the reply took, and what the Edge itself thought of its links at
-that moment:
-
-```
-19:39:09 glance read #1 GET /api/states/cover.garage_door phone=yes link=yes bt=2
-19:39:09 glance read #1 -> 200 in 84 ms state=closed
-```
-
-`phone` and `link` are the Edge's own view of its phone connection; `bt` is the Bluetooth
-state, 2 for connected, 1 for out of range, 0 for not set up. A failure with `phone=yes
-bt=2` means the Edge reached the phone and the request failed beyond it, at Garmin Connect,
-the phone's network or the server. `glance` and `screen` say which part made the request.
-To read it, plug the Edge in:
-
-```bash
-gio copy "mtp://<your-edge>/Internal Storage/Garmin/Apps/LOGS/HaControl.TXT" .
-```
-
-**If the log stays empty,** the Edge knows the app by another name. It keeps the file
-name the app was *first* installed under, through every later update. Look in
-`Garmin/Apps/DATA` for the `<name>.DAT` that isn't `HaArrival`, and create an empty
+**If `HaArrival.TXT` stays empty,** the Edge knows the field by another name. It keeps
+the file name an app was *first* installed under, through every later update. Look in
+`Garmin/Apps/DATA` for the field's `<name>.DAT` and create an empty
 `Garmin/Apps/LOGS/<name>.TXT` to match.
 
 Garmin gives an app very little FIT space. A 48-byte string field fails to allocate, and
@@ -446,7 +424,7 @@ HA Control, on the button screen:
 | `Not found on server` | 404 — webhook ID or service name does not match |
 | `Waiting for phone` | 20 s without an answer. The press is still pending and further presses are ignored until the relay answers, so two queued toggles cannot open and then shut the door |
 | `Last press still waiting` | The screen was closed and reopened within 2 minutes of a press that never got an answer. Presses are ignored until those 2 minutes are up, then the button returns to normal |
-| `Link dropped` | -1004 — the relay lost the connection before an answer came back, typical in the first minutes after an Edge restart |
+| `Link dropped` | -1004 — the relay lost the connection before an answer came back, typically because the phone could not reach the server |
 | `Queue full` | -101 — too many requests waiting at the relay |
 | `No reply in 2 min` | The relay never answered at all |
 | `Error 0` | Connect IQ's unknown error — the relay failed without saying why |
@@ -462,11 +440,14 @@ In place of the door's state, on the glance and the button screen:
 | `Waiting for phone` | A read has gone 20 s without an answer; the door shows its last known position |
 | `No phone`, `HA timeout`, `Link dropped`, `Error 0` … | The read failed for that reason; the door shows its last known position |
 
-**The first minutes after an Edge restart.** The Edge can report the phone as connected
-while Garmin Connect is not yet passing anything through. Requests then sit at the relay
-for a minute or more and fail together, as `Link dropped` or `Error 0`, after which
-everything works in well under a second. Nothing in an app can speed that up. The app
-waits rather than piling on more requests, and says `Waiting for phone` meanwhile.
+**When the phone cannot reach Home Assistant.** The Edge still reports the phone as
+connected, and Garmin Connect holds each request until the phone itself gives up, a
+minute or more, then fails it as `Error 0`, `HA timeout` or `Link dropped`. The app waits
+rather than piling on more requests, and says `Waiting for phone` meanwhile. Check from
+the phone, not the Edge: open the same URL the Edge uses, plus `/api/`, in the phone's
+browser. A `401` there means the phone's route is fine; a timeout means it is not. A
+firewall that lets only VPN clients reach the proxy does exactly this whenever the phone's
+traffic leaves the tunnel.
 
 HA Arrival, in the field while home is unknown:
 

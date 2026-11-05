@@ -156,6 +156,11 @@ class StateReader {
 
         var headers = {} as Dictionary<Object, Object>;
         headers["Authorization"] = "Bearer " + token;
+        // Experiment. Garmin Connect has been seen hanging every request for minutes
+        // until the phone's VPN reconnected, while other apps reached Home Assistant
+        // fine: it looks like a pooled connection gone stale. "close" asks for a fresh
+        // connection per request, at the cost of a TLS handshake each time.
+        headers["Connection"] = "close";
 
         Communications.makeWebRequest(base + "/api/states/" + _entity, null, {
             :method => Communications.HTTP_REQUEST_METHOD_GET,

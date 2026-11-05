@@ -146,7 +146,12 @@ confirms delivery.
   - A press that has timed out on screen can still be delivered later. `ActionRunner`
     keeps it pending ("Waiting for phone") and ignores further presses until the relay
     answers, so queued `cover.toggle` presses cannot cancel each other out.
-  - Nothing an app can do speeds up the relay's recovery.
+  - Nothing an app can do speeds up the relay's recovery. What fixed it on the
+    reference phone was turning the VPN off and on, while the Edge reported the phone
+    connected throughout and other apps on the phone reached Home Assistant fine. That
+    points at Garmin Connect reusing a stale connection. As an experiment, HA Control's
+    requests send `Connection: close`, which Connect IQ accepts. Whether Garmin Connect
+    honours it is still unproven; if the stalls continue, it can go.
 - **Timers are capped per app.** In the Edge 1040 simulator, three running timers
   worked and starting a fourth threw "Too Many Timers Error". The button screen uses two (the reader's follow loop and the press
   watchdog), and the glance uses two (follow and the once-a-minute re-read). A new

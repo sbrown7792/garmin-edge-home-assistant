@@ -208,6 +208,9 @@ class ActionRunner {
         if (needsAuth && token.length() > 0) {
             headers["Authorization"] = "Bearer " + token;
         }
+        // Same experiment as StateReader.refresh(): no reuse of a possibly stale
+        // connection on the phone.
+        headers["Connection"] = "close";
         return headers;
     }
 

@@ -147,6 +147,12 @@ confirms delivery.
   Assistant does not trust. That is network setup, so hand it to the human.
 - **Automations match on the button label.** Renaming a button breaks its automation
   until the automation is updated too.
+- **Entity IDs change under you.** Re-adding an integration gives its entities new IDs.
+  Home Assistant updates its own automations, but the ID compiled into `Config.mc` goes
+  stale, and `/api/states/<entity>` starts answering 404. The app then shows `Not found
+  in HA`. Before that existed, the glance kept showing the last state it had cached, for
+  weeks. To find the new ID, list `/api/states` (read-only) and filter on the domain,
+  e.g. `cover.`.
 - **The arrival automation must only open.** Use `cover.open_cover` with a `state:
   closed` condition, never `cover.toggle`. A toggle on STOP shuts an open door, and an
   open command during travel reverses some openers.
@@ -197,6 +203,15 @@ confirms delivery.
     nothing reports an error. The field just shows "No GPS".
   - `showAlert` needs **DataFieldAlert**.
   - Writing FIT fields needs **FitContributor**.
+- **The Edge keeps glances running.** Its device profile has `glance.liveUpdates =
+  true`, so `requestUpdate()` works and the glance view stays up for a long time. A
+  glance that reads once in `onShow` therefore goes stale. `StateReader.follow()`
+  re-reads while the door moves, and `HaGlanceView` re-reads every minute. Other devices
+  may use background glance updates instead, where the app is started, drawn once and
+  shut down; check `simulator.json` under the device package.
+- **A single read misses a moving door.** A garage door takes about 15 s. Any read
+  scheduled at a fixed delay after a press lands mid-travel and leaves "Opening" on
+  screen, so keep reading until `DoorMotion.keepReading()` says it has stopped.
 - **Timer buttons map to separate callbacks.** STOP calls `onTimerStop`, auto-pause
   calls `onTimerPause` and `onTimerResume`, and LAP calls `onTimerLap`. Only STOP should
   act.

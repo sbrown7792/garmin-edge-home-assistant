@@ -28,9 +28,10 @@ fire-and-forget button:
 The screen reads that entity's live state and the button says what the press will do —
 **OPEN** when the door is closed, **CLOSE** when it is open — above a door panel in the
 same colours as the glance. The press fires the event; your automation does the toggling
-(see section 2). After a press the screen re-reads the state twice, four seconds apart,
-so a door that takes a while to travel still ends up showing the truth. Anything with a
-meaningful state works: covers, lights, switches, `input_boolean`s.
+(see section 2). After a press the screen keeps re-reading the state every 3 s until the
+door comes to rest, for up to 45 s, so it ends up showing where the door stopped rather
+than somewhere on the way. Anything with a meaningful state works: covers, lights,
+switches, `input_boolean`s.
 
 Without an `:entity` the screen is a plain SEND button — right for a script, which has no
 state worth showing.
@@ -194,6 +195,16 @@ door panel beside the name: filled and green when closed, empty and orange when 
 half and yellow while moving, grey when unknown or unreachable. The title comes from the
 entity's `friendly_name`, so it matches what you see in Home Assistant. The last known
 state is cached, so the glance renders instantly and then refreshes.
+
+The Edge keeps its glances running rather than redrawing them on demand, so the glance
+reads again on its own: every 3 s while the door is moving, until it stops, and once a
+minute otherwise, which catches the door being moved from Home Assistant or the wall
+button.
+
+**If the glance shows `Not found in HA`,** the entity ID in your configuration no longer
+exists. Removing and re-adding an integration renames its entities, and Home Assistant
+does not tell anything outside it. Look the entity up again under Settings > Devices &
+Services > Entities and update `statusEntity` and each button's `:entity` to match.
 
 It works for anything with a meaningful state, not just covers — `off`/`locked` read as
 closed, everything else as open.
@@ -409,6 +420,13 @@ HA Control, on the button screen:
 | `No reply in 20s` | Nothing came back — the relay dropped the reply, or the phone lost its connection |
 | `Error -400` | The request **worked**; the reply was unparseable. `:webhook` and `:service` against Home Assistant do this every time — use `:event` |
 | `Error 500` etc. | Home Assistant answered with that status |
+
+In place of the door's state, on the glance and the button screen:
+
+| On screen | Means |
+| --- | --- |
+| `Not found in HA` | 404 — the entity ID no longer exists, usually because an integration was re-added and renamed it |
+| `Check token` | 401/403 — the token cannot read states |
 
 HA Arrival, in the field while home is unknown:
 

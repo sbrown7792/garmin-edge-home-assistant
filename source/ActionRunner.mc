@@ -20,6 +20,7 @@ class ActionRunner {
     private var _state as RunState = RUN_READY;
     private var _detail as String = "";
     private var _watchdog as Timer.Timer?;
+    private var _sentAt as Number = 0;
 
     function initialize(action as Dictionary<Symbol, String>) {
         _action = action;
@@ -58,6 +59,11 @@ class ActionRunner {
         _detail = "";
         WatchUi.requestUpdate();
 
+        _sentAt = System.getTimer();
+        var event = _action[:event];
+        Log.line("press " + getLabel() + " POST " +
+                 (event instanceof String ? "/api/events/" + event : "(not an event)") + " " +
+                 Log.links());
         startWatchdog();
 
         Communications.makeWebRequest(url, buildBody(), {
@@ -69,6 +75,8 @@ class ActionRunner {
 
     function onResponse(responseCode as Number, data as Dictionary or String or Null) as Void {
         stopWatchdog();
+        Log.line("press -> " + responseCode + " in " + (System.getTimer() - _sentAt) + " ms " +
+                 Log.links() + " body=" + Log.brief(data));
         if (responseCode >= 200 && responseCode < 300) {
             _state = RUN_SENT;
             _detail = clockString();
@@ -141,6 +149,7 @@ class ActionRunner {
     function onTimeout() as Void {
         stopWatchdog();
         if (_state == RUN_SENDING) {
+            Log.line("press -> no reply in 20 s " + Log.links());
             _state = RUN_FAILED;
             _detail = "No reply in 20s";
             alert(false);
@@ -182,6 +191,7 @@ class ActionRunner {
     }
 
     private function fail(message as String) as Void {
+        Log.line("press not sent: " + message);
         _state = RUN_FAILED;
         _detail = message;
         WatchUi.requestUpdate();

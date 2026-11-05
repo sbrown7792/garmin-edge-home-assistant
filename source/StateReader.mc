@@ -33,8 +33,13 @@ class StateReader {
     private var _from as String?;
     private var _seenMoving as Boolean = false;
 
-    function initialize(entity as String) {
+    // "glance" or "screen", so the log says which of the two made each request.
+    private var _tag as String;
+    private var _reads as Number = 0;
+
+    function initialize(entity as String, tag as String) {
         _entity = entity;
+        _tag = tag;
         var cached = Application.Storage.getValue("state:" + entity);
         if (cached instanceof String) {
             _state = cached as String;
@@ -70,6 +75,8 @@ class StateReader {
     //! cannot end the loop early, and the loop ends after FOLLOW_READS ticks whatever
     //! the relay does.
     function follow(from as String?) as Void {
+        Log.line(_tag + " follow from=" + (from != null ? from : "-") +
+                 " cached=" + (_state != null ? _state : "-"));
         _readsLeft = FOLLOW_READS;
         _from = from;
         _seenMoving = false;
@@ -94,6 +101,7 @@ class StateReader {
     function onFollowTick() as Void {
         _readsLeft -= 1;
         if (_readsLeft <= 0) {
+            Log.line(_tag + " follow gave up at " + (_state != null ? _state : "-"));
             stop();
             return;
         }
@@ -110,6 +118,7 @@ class StateReader {
             _seenMoving = true;
         }
         if (_stopped || !DoorMotion.keepReading(_state, _from, _seenMoving)) {
+            Log.line(_tag + " follow done at " + (_state != null ? _state : "-"));
             stop();
         }
     }
@@ -125,11 +134,14 @@ class StateReader {
                 return;
             }
             // The last read never came back. Say so while trying again.
+            Log.line(_tag + " read #" + _reads + " never answered; sending again");
             _problem = "No reply";
             WatchUi.requestUpdate();
         }
         _busy = true;
         _busySince = System.getTimer();
+        _reads += 1;
+        Log.line(_tag + " read #" + _reads + " GET /api/states/" + _entity + " " + Log.links());
 
         var headers = {} as Dictionary<Object, Object>;
         headers["Authorization"] = "Bearer " + token;
@@ -142,8 +154,16 @@ class StateReader {
     }
 
     function onState(responseCode as Number, data as Dictionary or String or Null) as Void {
+        var took = System.getTimer() - _busySince;
         _busy = false;
         _stopped = false;
+        if (responseCode == 200 && data instanceof Dictionary) {
+            Log.line(_tag + " read #" + _reads + " -> 200 in " + took + " ms state=" +
+                     Log.brief((data as Dictionary)["state"]));
+        } else {
+            Log.line(_tag + " read #" + _reads + " -> " + responseCode + " in " + took + " ms " +
+                     Log.links() + " body=" + Log.brief(data));
+        }
         if (responseCode == 404 || responseCode == 401 || responseCode == 403) {
             // Reading again will not help, and the last state seen is not worth showing.
             // A 404 usually means the entity was renamed in Home Assistant, which

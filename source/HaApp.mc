@@ -12,6 +12,7 @@ class HaApp extends Application.AppBase {
     }
 
     function onStop(state as Dictionary?) as Void {
+        Log.line("stop");
     }
 
     //! The Edge flips between light and dark while an app is open — at sunset, or when
@@ -23,6 +24,7 @@ class HaApp extends Application.AppBase {
 
     function getInitialView() as [Views] or [Views, InputDelegates] {
         var actions = AppConfig.actions();
+        Log.line("screen start actions=" + actions.size() + " " + Log.links());
         if (actions.size() > 1) {
             var menu = new WatchUi.Menu2({ :title => "Home Assistant" });
             for (var i = 0; i < actions.size(); i++) {
@@ -40,6 +42,7 @@ class HaApp extends Application.AppBase {
 
     (:glance)
     function getGlanceView() as [GlanceView] or [GlanceView, GlanceViewDelegate] or Null {
+        Log.line("glance start " + Log.links());
         return [new HaGlanceView()];
     }
 }

@@ -184,6 +184,28 @@ It prints each event with the distance, flags and response code at that moment, 
 summary of GPS coverage. Timer events are logged even though only STOP acts, so the log
 also confirms which callback each physical button produced on your device.
 
+### Diagnosing HA Control
+
+HA Control writes a line for every start, state read and button press to
+`Garmin/Apps/LOGS/HaControl.TXT`, which `install.sh app` creates. Each line gives the
+response code, how long the reply took, and what the Edge itself thought of its links at
+that moment:
+
+```
+19:39:09 glance read #1 GET /api/states/cover.garage_door phone=yes link=yes bt=2
+19:39:09 glance read #1 -> 200 in 84 ms state=closed
+```
+
+`phone` and `link` are the Edge's own view of its phone connection; `bt` is the Bluetooth
+state, 2 for connected, 1 for out of range, 0 for not set up. A failure with `phone=yes
+bt=2` means the Edge reached the phone and the request failed beyond it, at Garmin Connect,
+the phone's network or the server. `glance` and `screen` say which part made the request.
+To read it, plug the Edge in:
+
+```bash
+gio copy "mtp://<your-edge>/Internal Storage/Garmin/Apps/LOGS/HaControl.TXT" .
+```
+
 Garmin gives an app very little FIT space. A 48-byte string field fails to allocate, and
 writing a string longer than its field crashes the app outright — so the FIT file carries
 only the latest event line (32 bytes) and the text file carries everything.

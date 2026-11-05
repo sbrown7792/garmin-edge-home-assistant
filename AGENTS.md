@@ -229,7 +229,12 @@ confirms delivery.
   but vanish on white. `source/Theme.mc` holds the resolved colours for this repo.
 - **Logs stay on the device.**
   - `System.println` writes to `Garmin/Apps/LOGS/<PRG name>.TXT`, **but only if that
-    file already exists**. `install.sh field` creates `HaArrival.TXT`.
+    file already exists**. `install.sh` creates `HaControl.TXT` and `HaArrival.TXT` for
+    whichever apps it installs. HA Control logs every read and press through
+    `source/Log.mc`, with the response code, how long the reply took and the Edge's own
+    view of its phone link. Read it before guessing at a connection problem.
+  - **Connect IQ response code 0 is `UNKNOWN_ERROR`:** the relay failed without saying
+    why. It is not an HTTP status, so Home Assistant never sent it.
   - Crash reports go to `CIQ_LOG.*` in the same folder.
 - **Ride files are in `Garmin/Activities/`.** They contain a GPS track that usually
   starts and ends at the rider's home, so read them locally and never commit or upload

@@ -233,6 +233,12 @@ confirms delivery.
     whichever apps it installs. HA Control logs every read and press through
     `source/Log.mc`, with the response code, how long the reply took and the Edge's own
     view of its phone link. Read it before guessing at a connection problem.
+  - **The log is named after the app's first install, not the current `.prg`.** The
+    Edge records a sideloaded app under the file name it first arrived with and keeps
+    that name through every update with the same app ID. An HA Control first installed
+    as `Garage.prg` logs to `LOGS/Garage.TXT`, and `HaControl.TXT` stays empty. The
+    names the device actually uses are visible in `Garmin/Apps/DATA` (`<name>.DAT`) and
+    `Garmin/Apps/SETTINGS` (`<name>.SET`). Create the log under that name.
   - **Connect IQ response code 0 is `UNKNOWN_ERROR`:** the relay failed without saying
     why. It is not an HTTP status, so Home Assistant never sent it.
   - Crash reports go to `CIQ_LOG.*` in the same folder.

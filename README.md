@@ -206,6 +206,11 @@ To read it, plug the Edge in:
 gio copy "mtp://<your-edge>/Internal Storage/Garmin/Apps/LOGS/HaControl.TXT" .
 ```
 
+**If the log stays empty,** the Edge knows the app by another name. It keeps the file
+name the app was *first* installed under, through every later update. Look in
+`Garmin/Apps/DATA` for the `<name>.DAT` that isn't `HaArrival`, and create an empty
+`Garmin/Apps/LOGS/<name>.TXT` to match.
+
 Garmin gives an app very little FIT space. A 48-byte string field fails to allocate, and
 writing a string longer than its field crashes the app outright — so the FIT file carries
 only the latest event line (32 bytes) and the text file carries everything.

@@ -444,7 +444,11 @@ HA Control, on the button screen:
 | `HTTPS required` | URL is http://, or the certificate does not validate |
 | `Check token` | 401/403 — token missing, wrong, or expired |
 | `Not found on server` | 404 — webhook ID or service name does not match |
-| `No reply in 20s` | Nothing came back — the relay dropped the reply, or the phone lost its connection |
+| `Waiting for phone` | 20 s without an answer. The press is still pending and further presses are ignored until the relay answers, so two queued toggles cannot open and then shut the door |
+| `Link dropped` | -1004 — the relay lost the connection before an answer came back, typical in the first minutes after an Edge restart |
+| `Queue full` | -101 — too many requests waiting at the relay |
+| `No reply in 2 min` | The relay never answered at all |
+| `Error 0` | Connect IQ's unknown error — the relay failed without saying why |
 | `Error -400` | The request **worked**; the reply was unparseable. `:webhook` and `:service` against Home Assistant do this every time — use `:event` |
 | `Error 500` etc. | Home Assistant answered with that status |
 
@@ -454,6 +458,14 @@ In place of the door's state, on the glance and the button screen:
 | --- | --- |
 | `Not found in HA` | 404 — the entity ID no longer exists, usually because an integration was re-added and renamed it |
 | `Check token` | 401/403 — the token cannot read states |
+| `Waiting for phone` | A read has gone 20 s without an answer; the door shows its last known position |
+| `No phone`, `HA timeout`, `Link dropped`, `Error 0` … | The read failed for that reason; the door shows its last known position |
+
+**The first minutes after an Edge restart.** The Edge can report the phone as connected
+while Garmin Connect is not yet passing anything through. Requests then sit at the relay
+for a minute or more and fail together, as `Link dropped` or `Error 0`, after which
+everything works in well under a second. Nothing in an app can speed that up. The app
+waits rather than piling on more requests, and says `Waiting for phone` meanwhile.
 
 HA Arrival, in the field while home is unknown:
 

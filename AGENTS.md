@@ -135,8 +135,22 @@ confirms delivery.
   succeeded.**
 - **The simulator is more lenient than the relay** and reports success for all three
   endpoints. Only a real device proves the reply path.
-- **The relay sometimes never answers.** `ActionRunner` has a 20 s watchdog so the
-  screen does not sit on SENDING forever. Keep a watchdog on any new request.
+- **The relay holds requests rather than losing them.** For the first minutes after an
+  Edge restart, Garmin Connect can sit on every request even though the Edge reports
+  `phoneConnected` true and Bluetooth connected. Then it fails them all in the same
+  second, seen at 53 s and 77 s with -1004 and 0, and from then on answers in under a
+  second. Consequences:
+  - Never resend because an answer is late; that only fills the queue, and then every
+    request bounces at once with -101 (`BLE_QUEUE_FULL`). `StateReader` keeps one read
+    in flight and writes it off only after 2 minutes.
+  - A press that has timed out on screen can still be delivered later. `ActionRunner`
+    keeps it pending ("Waiting for phone") and ignores further presses until the relay
+    answers, so queued `cover.toggle` presses cannot cancel each other out.
+  - Nothing an app can do speeds up the relay's recovery.
+- **Timers are capped per app.** In the Edge 1040 simulator, three running timers
+  worked and starting a fourth threw "Too Many Timers Error". The button screen uses two (the reader's follow loop and the press
+  watchdog), and the glance uses two (follow and the once-a-minute re-read). A new
+  timer on either needs one of those to be shared.
 - **Connect IQ's own error codes are negative,** running from -1 into the -1000s. The
   field's private codes are -9001 to -9003 for that reason. Keep any new ones clear of
   that range.

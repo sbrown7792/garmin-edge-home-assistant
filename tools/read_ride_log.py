@@ -39,6 +39,8 @@ EVENTS = {
     14: "resume",
     15: "LAP",
     16: "field loaded",
+    17: "success toast shown",
+    18: "toast refused, alert shown",
 }
 
 FLAGS = [(1, "gps"), (2, "home"), (4, "inside"), (8, "on")]

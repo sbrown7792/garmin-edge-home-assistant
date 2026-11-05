@@ -37,6 +37,8 @@ class HomeField extends WatchUi.SimpleDataField {
     private const EV_RESUME = 14;
     private const EV_LAP = 15;
     private const EV_LOADED = 16;
+    private const EV_TOAST = 17;
+    private const EV_TOAST_ALERT = 18;
 
     // Bits of the per-second ha_flags field.
     private const FLAG_GPS = 1;
@@ -233,8 +235,34 @@ class HomeField extends WatchUi.SimpleDataField {
         setCode(responseCode);
         logEvent(ok ? EV_SENT_OK : EV_SENT_FAILED, "sent " + responseCode.toString());
         showStatus(ok ? "Garage sent" : "Failed " + responseCode.toString());
+        if (ok) {
+            confirmSent();
+            return;
+        }
+        // A failure is worth interrupting for: the door did not move, and you are about
+        // to walk away from the bike.
         if (WatchUi.DataField has :showAlert) {
-            showAlert(new ArrivalAlert(ok ? "Opening garage" : "Garage failed", ok));
+            showAlert(new ArrivalAlert("Garage failed", false));
+        }
+    }
+
+    //! Success has to stay out of the way. A DataFieldAlert holds the whole screen until
+    //! it times out, which eats the save prompt the Edge shows after STOP and drops the
+    //! rider back on the ride page. A toast is a self-dismissing banner that leaves that
+    //! sequence alone.
+    private function confirmSent() as Void {
+        if (WatchUi has :showToast) {
+            try {
+                WatchUi.showToast("Opening garage", null);
+                logEvent(EV_TOAST, "toast shown");
+                return;
+            } catch (ex) {
+                logEvent(EV_TOAST_ALERT, "toast failed, alert instead");
+            }
+        }
+        // Toasts arrived in API 3.4.0; on anything older, saying nothing would be worse.
+        if (WatchUi.DataField has :showAlert) {
+            showAlert(new ArrivalAlert("Opening garage", true));
         }
     }
 

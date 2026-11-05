@@ -236,6 +236,12 @@ confirms delivery.
 - **Timer buttons map to separate callbacks.** STOP calls `onTimerStop`, auto-pause
   calls `onTimerPause` and `onTimerResume`, and LAP calls `onTimerLap`. Only STOP should
   act.
+- **A `DataFieldAlert` after STOP costs the rider the save prompt.** It holds the whole
+  screen until it times out, and the Edge drops back to the ride page instead of
+  offering to save, so the rider has to reach for the save button. Use
+  `WatchUi.showToast(text, null)` (API 3.4.0) for anything that is merely good news: it
+  is a self-dismissing banner that leaves the device's own flow intact. Keep the alert
+  for failures, which are worth interrupting for.
 - **FIT developer fields are tiny.**
   - A string field with a count of 48 or more fails with "New Field out of memory for
     FIT data".
